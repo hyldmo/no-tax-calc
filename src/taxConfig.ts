@@ -13,14 +13,14 @@ export interface TaxConfig {
 	generalTaxRate: number
 	brackets: { limit: number; rate: number }[]
 	calculateEffectiveMonthly?: (monthly: number, pensionRate: number) => number
-	pensionDistribution?: { rate: number; percentage: number }[]
+	pensionDistribution?: { rate: number; percentage: number; color: string }[]
 }
 
 // Pension Constants (Private Sector Norway)
 const PENSION_DISTRIBUTION = [
-	{ rate: 2, percentage: 50 },
-	{ rate: 5, percentage: 30 },
-	{ rate: 7, percentage: 20 }
+	{ rate: 2, percentage: 50, color: 'bg-slate-300/50' },
+	{ rate: 5, percentage: 30, color: 'bg-blue-200/50' },
+	{ rate: 7, percentage: 20, color: 'bg-blue-400/50' }
 ]
 
 // Helper to get pension stats

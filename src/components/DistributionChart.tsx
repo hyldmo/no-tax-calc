@@ -16,8 +16,21 @@ export const DistributionChart: React.FC<DistributionChartProps> = ({ data, user
 	// Find active bucket index for highlighting
 	const activeBucketIndex = data.findIndex(b => userMonthly >= b.min && userMonthly < b.max)
 
+	// Calculate user line position based on bucket system
+	let userLineX = 0
+	if (userMonthly > 0 && activeBucketIndex >= 0) {
+		const bucket = data[activeBucketIndex]
+		const bucketRange = bucket.max - bucket.min
+		const positionInBucket = userMonthly - bucket.min
+		const fractionInBucket = bucketRange > 0 ? positionInBucket / bucketRange : 0.5
+		userLineX = (activeBucketIndex + fractionInBucket) * barWidth
+	} else if (userMonthly > 0) {
+		// If outside range, position at end
+		userLineX = data.length * barWidth
+	}
+
 	return (
-		<div className="relative h-full min-h-[250px] w-full">
+		<div className="relative h-full min-h-[250px] w-full pb-8">
 			<svg width="100%" height="100%" preserveAspectRatio="none" className="overflow-visible">
 				<defs>
 					<linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -52,32 +65,29 @@ export const DistributionChart: React.FC<DistributionChartProps> = ({ data, user
 
 							{/* Invisible hover hit area */}
 							<rect x={`${x}%`} y="0" width={`${barWidth}%`} height="100%" fill="transparent">
-								<title>{`${bucket.min}-${bucket.max} kr: ${bucket.count.toLocaleString()} personer`}</title>
+								<title>{`${bucket.min}-${
+									bucket.max
+								} kr: ${bucket.count.toLocaleString()} personer`}</title>
 							</rect>
 						</g>
 					)
 				})}
 
 				{/* User Line Marker */}
-				{userMonthly > 0 && userMonthly <= 200000 && (
+				{userMonthly > 0 && (
 					<g
 						className="transition-all duration-700 ease-out"
-						style={{ transform: `translateX(${(userMonthly / 200000) * 100}%)` }}
+						style={{ transform: `translateX(${userLineX}%)` }}
 					>
-						<line
-							x1="0"
-							y1="-10%"
-							x2="0"
-							y2="100%"
-							stroke="#2563eb"
-							strokeWidth="2"
-							strokeDasharray="4 2"
-						/>
-						<circle cx="0" cy="-10%" r="4" fill="#2563eb" />
-						<rect x="-30" y="-20%" width="60" height="20" rx="4" fill="#1e293b" />
-						<text x="0" y="-15%" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">
-							Du er her
-						</text>
+						<line x1="0" y1="0%" x2="0" y2="100%" stroke="#2563eb" strokeWidth="2" strokeDasharray="4 2" />
+						<g transform="translate(0, 100%)">
+							<circle cx="0" cy="0" r="4" fill="#2563eb" />
+							<foreignObject x="-45" y="8" width="90" height="20" style={{ overflow: 'visible' }}>
+								<div className="rounded bg-slate-800 px-3 py-1 text-center font-bold text-white text-xs">
+									Du er her
+								</div>
+							</foreignObject>
+						</g>
 					</g>
 				)}
 			</svg>

@@ -12,9 +12,6 @@ export const PensionSlider: React.FC<PensionSliderProps> = ({ value, onChange, c
 	const [isDragging, setIsDragging] = useState(false)
 	const { min, max, distribution } = getPensionStats(country)
 
-	// Define segment colors in order
-	const SEGMENT_COLORS = ['bg-slate-300/50', 'bg-blue-200/50', 'bg-blue-400/50']
-
 	const handleInteraction = (clientX: number) => {
 		if (!containerRef.current) return
 		const rect = containerRef.current.getBoundingClientRect()
@@ -81,31 +78,19 @@ export const PensionSlider: React.FC<PensionSliderProps> = ({ value, onChange, c
 			>
 				{/* Track Background */}
 				<div className="-translate-y-1/2 absolute top-1/2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-					{/* Colored Segments - Dynamically calculated */}
+					{/* Colored Segments - Flexbox to fill bar while maintaining ratio */}
 					<div className="absolute inset-0 flex">
-						{distribution.map((item, index) => {
-							// Calculate start and end points for this segment
-							const prevRate = index > 0 ? distribution[index - 1].rate : min
-							const nextRate = index < distribution.length - 1 ? distribution[index + 1].rate : max
-
-							// Start is midpoint between prev and current (or min for first)
-							const start = index === 0 ? min : (prevRate + item.rate) / 2
-
-							// End is midpoint between current and next (or max for last)
-							const end = index === distribution.length - 1 ? max : (item.rate + nextRate) / 2
-
-							const widthPercentage = ((end - start) / (max - min)) * 100
-
-							return (
+						{distribution
+							.filter(item => item.rate !== min)
+							.map(item => (
 								<div
 									key={item.rate}
-									className={`h-full ${SEGMENT_COLORS[index % SEGMENT_COLORS.length]}`}
+									className={`h-full ${item.color}`}
 									style={{
-										width: `${widthPercentage}%`
+										flex: item.percentage
 									}}
 								/>
-							)
-						})}
+							))}
 					</div>
 				</div>
 
