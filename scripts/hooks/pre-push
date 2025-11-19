@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Run lint before pushing
+echo "Running lint checks..."
+yarn lint
+
+if [ $? -ne 0 ]; then
+  echo "❌ Lint checks failed. Please fix the errors before pushing."
+  exit 1
+fi
+
+echo "✅ Lint checks passed."
+exit 0
+
