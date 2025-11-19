@@ -12,6 +12,26 @@ export interface TaxConfig {
 	personalDeduction: number // Personfradrag
 	generalTaxRate: number
 	brackets: { limit: number; rate: number }[]
+	calculateEffectiveMonthly?: (monthly: number, pensionRate: number) => number
+	pensionDistribution?: { rate: number; percentage: number }[]
+}
+
+// Pension Constants (Private Sector Norway)
+const PENSION_DISTRIBUTION = [
+	{ rate: 2, percentage: 50 },
+	{ rate: 5, percentage: 30 },
+	{ rate: 7, percentage: 20 }
+]
+
+// Helper to get pension stats
+export const getPensionStats = (country: Country = 'NO') => {
+	const distribution = TAX_CONFIGS[country]?.pensionDistribution || PENSION_DISTRIBUTION
+	const rates = distribution.map(d => d.rate)
+	const min = Math.min(...rates)
+	const max = Math.max(...rates)
+	const avg = Math.round(distribution.reduce((acc, curr) => acc + curr.rate * (curr.percentage / 100), 0) * 10) / 10
+
+	return { min, max, avg, distribution }
 }
 
 export const TAX_CONFIGS: Record<Country, TaxConfig> = {
@@ -32,7 +52,14 @@ export const TAX_CONFIGS: Record<Country, TaxConfig> = {
 			{ limit: 670000, rate: 0.136 },
 			{ limit: 937900, rate: 0.166 },
 			{ limit: 1350000, rate: 0.176 }
-		]
+		],
+		pensionDistribution: PENSION_DISTRIBUTION,
+		calculateEffectiveMonthly: (monthly: number, pensionRate: number) => {
+			// Normalize user salary to be comparable to base salary distribution
+			// by adjusting for the difference between user's pension and average pension
+			const { avg } = getPensionStats('NO')
+			return (monthly * (1 + pensionRate / 100)) / (1 + avg / 100)
+		}
 	},
 	SE: {
 		currency: 'SEK',

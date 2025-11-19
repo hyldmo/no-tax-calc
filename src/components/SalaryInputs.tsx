@@ -1,5 +1,7 @@
 import React from 'react'
 import { NumericFormat } from 'react-number-format'
+import { PensionSlider } from './PensionSlider'
+import { getPensionStats, Country } from '../taxConfig'
 
 interface SalaryInputsProps {
 	yearlyWage: string
@@ -8,6 +10,7 @@ interface SalaryInputsProps {
 	setDeductions: (value: string) => void
 	pensionRate: number
 	setPensionRate: (value: number) => void
+	country: Country
 }
 
 export const SalaryInputs: React.FC<SalaryInputsProps> = ({
@@ -16,8 +19,11 @@ export const SalaryInputs: React.FC<SalaryInputsProps> = ({
 	deductions,
 	setDeductions,
 	pensionRate,
-	setPensionRate
+	setPensionRate,
+	country
 }) => {
+	const { avg } = getPensionStats(country)
+
 	return (
 		<div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 			{/* Salary Input */}
@@ -57,26 +63,13 @@ export const SalaryInputs: React.FC<SalaryInputsProps> = ({
 			<div>
 				<div className="mb-2 flex justify-between">
 					<label className="block font-semibold text-slate-700 text-sm">Arbeidsgivers Pensjon (OTP)</label>
-					<span className="rounded bg-blue-50 px-2 py-0.5 font-bold text-blue-600 text-sm">
-						{pensionRate}%
-					</span>
 				</div>
-				<input
-					type="range"
-					min="2"
-					max="7"
-					step="0.5"
-					value={pensionRate}
-					onChange={e => setPensionRate(Number(e.target.value))}
-					className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600"
-				/>
-				<div className="mt-1 flex justify-between text-slate-400 text-xs">
-					<span>2% (Min)</span>
-					<span>7% (Maks)</span>
-				</div>
+
+				<PensionSlider value={pensionRate} onChange={setPensionRate} country={country} />
+
 				<p className="mt-2 text-slate-400 text-xs">
-					Dette er arbeidsgivers kostnad. Det øker "total skatt" (Skattekile) via arbeidsgiveravgift, men
-					påvirker ikke din lønnsslipp direkte.
+					OTP-satser varierer. Gjennomsnittet i privat sektor er ca {avg}%. Din sats påvirker sammenligningen
+					av "total lønn".
 				</p>
 			</div>
 		</div>

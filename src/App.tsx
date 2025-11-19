@@ -8,57 +8,19 @@ import { TabNavigation } from './components/TabNavigation'
 import { DistributionTab } from './components/DistributionTab'
 import { TaxTab } from './components/TaxTab'
 import { calculateTaxDetails } from './utils/taxCalculations'
-
-const STORAGE_KEYS = {
-	yearlyWage: 'no-tax-calc-yearly-wage',
-	deductions: 'no-tax-calc-deductions',
-	pensionRate: 'no-tax-calc-pension-rate',
-	country: 'no-tax-calc-country'
-}
+import { useStorageState } from './hooks/useStorageState'
+import { TAX_CONFIGS } from './taxConfig'
 
 export const App: React.FC = () => {
-	const [yearlyWage, setYearlyWage] = useState<string>(() => {
-		return localStorage.getItem(STORAGE_KEYS.yearlyWage) || ''
-	})
-	const [pensionRate, setPensionRate] = useState<number>(() => {
-		const stored = localStorage.getItem(STORAGE_KEYS.pensionRate)
-		return stored ? Number(stored) : 2
-	})
-	const [deductions, setDeductions] = useState<string>(() => {
-		return localStorage.getItem(STORAGE_KEYS.deductions) || ''
-	})
-	const [country, setCountry] = useState<Country>(() => {
-		return (localStorage.getItem(STORAGE_KEYS.country) as Country) || 'NO'
-	})
+	const [yearlyWage, setYearlyWage] = useStorageState<string>('yearlyWage', '')
+	const [pensionRate, setPensionRate] = useStorageState<number>('pensionRate', 2)
+	const [deductions, setDeductions] = useStorageState<string>('deductions', '')
+	const [country, setCountry] = useStorageState<Country>('country', 'NO')
 
 	const [monthlyWage, setMonthlyWage] = useState<number>(0)
+	const [effectiveMonthlyWage, setEffectiveMonthlyWage] = useState<number>(0)
 	const [percentile, setPercentile] = useState<number | null>(null)
 	const [activeTab, setActiveTab] = useState<'distribution' | 'tax'>('distribution')
-
-	// Persist to localStorage
-	useEffect(() => {
-		if (yearlyWage) {
-			localStorage.setItem(STORAGE_KEYS.yearlyWage, yearlyWage)
-		} else {
-			localStorage.removeItem(STORAGE_KEYS.yearlyWage)
-		}
-	}, [yearlyWage])
-
-	useEffect(() => {
-		if (deductions) {
-			localStorage.setItem(STORAGE_KEYS.deductions, deductions)
-		} else {
-			localStorage.removeItem(STORAGE_KEYS.deductions)
-		}
-	}, [deductions])
-
-	useEffect(() => {
-		localStorage.setItem(STORAGE_KEYS.pensionRate, String(pensionRate))
-	}, [pensionRate])
-
-	useEffect(() => {
-		localStorage.setItem(STORAGE_KEYS.country, country)
-	}, [country])
 
 	// Process data to get cumulative totals
 	const processedData: ProcessedBucket[] = useMemo(() => {
@@ -90,6 +52,7 @@ export const App: React.FC = () => {
 		if (!yearlyWage) {
 			setPercentile(null)
 			setMonthlyWage(0)
+			setEffectiveMonthlyWage(0)
 			return
 		}
 
@@ -99,13 +62,25 @@ export const App: React.FC = () => {
 		const monthly = yearly / 12
 		setMonthlyWage(monthly)
 
+		// Calculate Effective Monthly Wage for comparison
+		// Adjust user salary to be comparable to base salary distribution
+		// by normalizing pension rates.
+		let effectiveMonthly = monthly
+
+		const config = TAX_CONFIGS[country]
+		if (config.calculateEffectiveMonthly) {
+			effectiveMonthly = config.calculateEffectiveMonthly(monthly, pensionRate)
+		}
+
+		setEffectiveMonthlyWage(effectiveMonthly)
+
 		// Calculate Percentile
 		let calculatedPercentile = 0
-		const bucket = processedData.find(b => monthly >= b.min && monthly < b.max + 1)
+		const bucket = processedData.find(b => effectiveMonthly >= b.min && effectiveMonthly < b.max + 1)
 
 		if (bucket) {
 			const range = bucket.max - bucket.min
-			const positionInBucket = monthly - bucket.min
+			const positionInBucket = effectiveMonthly - bucket.min
 			const fractionOfBucket = positionInBucket / range
 
 			const countBeforeBucket = bucket.cumulativeBelow
@@ -114,7 +89,7 @@ export const App: React.FC = () => {
 
 			calculatedPercentile = (totalCountBelow / totalPopulation) * 100
 		} else {
-			if (monthly < RAW_DATA[0].min) {
+			if (effectiveMonthly < RAW_DATA[0].min) {
 				calculatedPercentile = 0.1
 			} else {
 				calculatedPercentile = 99.9
@@ -122,7 +97,7 @@ export const App: React.FC = () => {
 		}
 
 		setPercentile(calculatedPercentile)
-	}, [yearlyWage, processedData, totalPopulation])
+	}, [yearlyWage, processedData, totalPopulation, pensionRate, country])
 
 	return (
 		<div className="min-h-screen bg-slate-50 p-4 font-sans text-slate-800 md:p-8">
@@ -139,6 +114,7 @@ export const App: React.FC = () => {
 							setDeductions={setDeductions}
 							pensionRate={pensionRate}
 							setPensionRate={setPensionRate}
+							country={country}
 						/>
 
 						<StatsGrid yearlyWage={yearlyWage} monthlyWage={monthlyWage} percentile={percentile} />
@@ -151,7 +127,7 @@ export const App: React.FC = () => {
 						{/* Tab Content Container */}
 						<div className="relative flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 							{activeTab === 'distribution' ? (
-								<DistributionTab data={processedData} userMonthly={monthlyWage} />
+								<DistributionTab data={processedData} userMonthly={effectiveMonthlyWage} />
 							) : (
 								<TaxTab
 									yearlyWage={yearlyWage}
