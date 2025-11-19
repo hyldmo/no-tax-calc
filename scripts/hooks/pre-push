@@ -11,4 +11,3 @@ fi
 
 echo "✅ Lint checks passed."
 exit 0
-
