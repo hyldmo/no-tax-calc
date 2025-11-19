@@ -1,4 +1,5 @@
 import React from 'react'
+import { NumericFormat } from 'react-number-format'
 
 interface SalaryInputsProps {
 	yearlyWage: string
@@ -24,11 +25,12 @@ export const SalaryInputs: React.FC<SalaryInputsProps> = ({
 				<label className="mb-2 block font-semibold text-slate-700 text-sm">Din Årslønn (Brutto)</label>
 				<div className="relative">
 					<span className="-translate-y-1/2 absolute top-1/2 left-4 font-medium text-slate-400">kr</span>
-					<input
-						type="number"
+					<NumericFormat
 						value={yearlyWage}
-						onChange={e => setYearlyWage(e.target.value)}
+						onValueChange={values => setYearlyWage(values.value)}
+						thousandSeparator=" "
 						placeholder="550000"
+						allowNegative={false}
 						className="w-full rounded-xl border border-slate-200 bg-slate-50 py-4 pr-4 pl-10 font-bold text-slate-800 text-xl outline-none transition-all placeholder:text-slate-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 					/>
 				</div>
@@ -39,11 +41,12 @@ export const SalaryInputs: React.FC<SalaryInputsProps> = ({
 				<label className="mb-2 block font-semibold text-slate-700 text-sm">Dine Fradrag (f.eks IPS, lån)</label>
 				<div className="relative">
 					<span className="-translate-y-1/2 absolute top-1/2 left-4 font-medium text-slate-400">kr</span>
-					<input
-						type="number"
+					<NumericFormat
 						value={deductions}
-						onChange={e => setDeductions(e.target.value)}
+						onValueChange={values => setDeductions(values.value)}
+						thousandSeparator=" "
 						placeholder="0"
+						allowNegative={false}
 						className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 font-medium text-slate-800 outline-none transition-all placeholder:text-slate-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
 					/>
 				</div>
