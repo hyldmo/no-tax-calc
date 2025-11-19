@@ -12,7 +12,7 @@ export const DistributionChart: React.FC<DistributionChartProps> = ({ data, user
   // const height = 100; // Percent - Unused but kept for context
   const maxCount = Math.max(...data.map(d => d.count));
   const barWidth = 100 / data.length;
-  
+
   // Find active bucket index for highlighting
   const activeBucketIndex = data.findIndex(b => userMonthly >= b.min && userMonthly < b.max);
 
@@ -49,7 +49,7 @@ export const DistributionChart: React.FC<DistributionChartProps> = ({ data, user
                 className="transition-all duration-500 ease-out"
                 rx="2"
               />
-              
+
               {/* Invisible hover hit area */}
               <rect
                 x={`${x}%`}
@@ -85,4 +85,3 @@ export const DistributionChart: React.FC<DistributionChartProps> = ({ data, user
     </div>
   );
 };
-

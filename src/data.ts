@@ -61,4 +61,3 @@ export const BRACKETS = [
   { limit: 937900, rate: 0.166 },
   { limit: 1350000, rate: 0.176 },
 ];
-

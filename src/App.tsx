@@ -1,16 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Calculator, TrendingUp, Users, BarChart3, Info, Building, Wallet, PieChart, ArrowRight } from 'lucide-react';
 import { ProcessedBucket, TaxDetails } from './types';
-import { 
-  RAW_DATA, 
-  G_BASE, 
-  AGA_RATE, 
-  TRYGDEAVGIFT_RATE, 
-  MINSTEFRADRAG_RATE, 
-  MINSTEFRADRAG_MAX, 
-  MINSTEFRADRAG_MIN, 
-  PERSONFRADRAG, 
-  GENERAL_TAX_RATE 
+import {
+  RAW_DATA,
+  G_BASE,
+  AGA_RATE,
+  TRYGDEAVGIFT_RATE,
+  MINSTEFRADRAG_RATE,
+  MINSTEFRADRAG_MAX,
+  MINSTEFRADRAG_MIN,
+  PERSONFRADRAG,
+  GENERAL_TAX_RATE
 } from './data';
 import { DistributionChart } from './components/DistributionChart';
 
@@ -28,13 +28,13 @@ export const App: React.FC = () => {
   const [deductions, setDeductions] = useState<string>(''); // User deductions (IPS, interest, etc)
   const [monthlyWage, setMonthlyWage] = useState<number>(0);
   const [percentile, setPercentile] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'distribution' | 'tax'>('distribution'); 
-  
+  const [activeTab, setActiveTab] = useState<'distribution' | 'tax'>('distribution');
+
   // Process data to get cumulative totals
   const processedData: ProcessedBucket[] = useMemo(() => {
     let cumulative = 0;
     const totalPopulation = RAW_DATA.reduce((acc, curr) => acc + curr.count, 0);
-    
+
     return RAW_DATA.map(bucket => {
       const prevCumulative = cumulative;
       cumulative += bucket.count;
@@ -54,7 +54,7 @@ export const App: React.FC = () => {
   const taxDetails: TaxDetails = useMemo(() => {
     const grossYearly = parseFloat(yearlyWage) || 0;
     const userDeductions = parseFloat(deductions) || 0;
-    
+
     // 1. Pension (Employer OTP)
     // Mandatory OTP is usually calculated on income > 1G and < 12G
     // Note: This is EMPLOYER contribution, does not affect employee taxable income immediately
@@ -67,7 +67,7 @@ export const App: React.FC = () => {
     const agaCost = agaBasis * AGA_RATE;
 
     // 3. Employee Tax (Estimated)
-    
+
     // Minstefradrag (Standard deduction)
     // Has floor and ceiling
     let minstefradrag = grossYearly * MINSTEFRADRAG_RATE;
@@ -75,20 +75,20 @@ export const App: React.FC = () => {
     if (minstefradrag < MINSTEFRADRAG_MIN && grossYearly > MINSTEFRADRAG_MIN) minstefradrag = MINSTEFRADRAG_MIN;
     if (grossYearly <= MINSTEFRADRAG_MIN) minstefradrag = grossYearly;
 
-    
+
     // Alminnelig inntekt (General Income)
     // Gross - Standard Deductions - Personal Deductions (Interest, IPS, Unions etc)
     const generalIncomeBase = grossYearly - minstefradrag - PERSONFRADRAG;
     const generalIncome = Math.max(0, generalIncomeBase - userDeductions);
-    
+
     const taxOnGeneralIncome = generalIncome * GENERAL_TAX_RATE;
-    
+
     // Trygdeavgift (Social Security) - Based on Gross (Personinntekt)
     const trygdeavgift = grossYearly * TRYGDEAVGIFT_RATE;
-    
+
     // Trinnskatt (Bracket Tax) - Based on Gross (Personinntekt)
     let trinnskatt = 0;
-    
+
     // Chunk 1: 208k - 292k
     if (grossYearly > 208050) {
        const limit = 292850;
@@ -117,7 +117,7 @@ export const App: React.FC = () => {
 
     const totalEmployeeTax = taxOnGeneralIncome + trygdeavgift + trinnskatt;
     const netYearly = grossYearly - totalEmployeeTax;
-    
+
     // Total Tax Wedge (What the state gets in total)
     const totalStateRevenue = totalEmployeeTax + agaCost;
 
@@ -157,11 +157,11 @@ export const App: React.FC = () => {
       const range = bucket.max - bucket.min;
       const positionInBucket = monthly - bucket.min;
       const fractionOfBucket = positionInBucket / range;
-      
+
       const countBeforeBucket = bucket.cumulativeBelow;
       const countInBucketSoFar = bucket.count * fractionOfBucket;
       const totalCountBelow = countBeforeBucket + countInBucketSoFar;
-      
+
       calculatedPercentile = (totalCountBelow / totalPopulation) * 100;
     } else {
       if (monthly < RAW_DATA[0].min) {
@@ -177,7 +177,7 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-800">
       <div className="max-w-4xl mx-auto">
-        
+
         {/* Header */}
         <header className="mb-8 text-center md:text-left">
           <h1 className="text-3xl font-bold text-slate-900 flex items-center justify-center md:justify-start gap-3">
@@ -190,13 +190,13 @@ export const App: React.FC = () => {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Left Column: Inputs & Summary */}
           <div className="lg:col-span-5 space-y-6">
-            
+
             {/* Main Input Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-              
+
               {/* Salary Input */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -286,7 +286,7 @@ export const App: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {percentile !== null && (
               <div className="text-center text-sm text-slate-500">
                 Du tjener mer enn <strong>{percentile.toFixed(1)}%</strong> av befolkningen.
@@ -296,7 +296,7 @@ export const App: React.FC = () => {
 
           {/* Right Column: Tabs & Content */}
           <div className="lg:col-span-7 flex flex-col h-full">
-            
+
             {/* Custom Tabs */}
             <div className="bg-white/50 p-1 rounded-xl border border-slate-200 mb-4 inline-flex self-start w-full sm:w-auto">
               <button
@@ -325,17 +325,17 @@ export const App: React.FC = () => {
 
             {/* Tab Content Container */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1 relative overflow-hidden">
-              
+
               {activeTab === 'distribution' ? (
                 <div className="h-full flex flex-col">
                   <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                     <Users className="w-5 h-5 text-slate-400" /> Befolkningsfordeling
                   </h3>
-                  
+
                   <div className="flex-1 w-full min-h-[300px]">
                      <DistributionChart data={processedData} userMonthly={monthlyWage} />
                   </div>
-                  
+
                   <div className="mt-4 flex justify-between text-xs text-slate-400 font-medium border-t border-slate-100 pt-4">
                     <span>5 000 kr</span>
                     <span>100 000 kr</span>
@@ -361,12 +361,12 @@ export const App: React.FC = () => {
                       {/* Employer Section */}
                       <div className="space-y-3">
                          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Arbeidsgiver (Kostnad)</div>
-                         
+
                          <div className="flex justify-between items-center py-2 border-b border-slate-50">
                            <span className="text-slate-600">Bruttolønn</span>
                            <span className="font-medium text-slate-900">{formatNOK(parseFloat(yearlyWage))}</span>
                          </div>
-                         
+
                          <div className="flex justify-between items-center py-2 border-b border-slate-50">
                            <span className="text-slate-600 flex items-center gap-1">
                              Pensjon (OTP {pensionRate}%)
@@ -379,7 +379,7 @@ export const App: React.FC = () => {
                            <span className="text-slate-600">Arbeidsgiveravgift (14.1%)</span>
                            <span className="font-medium text-slate-900">+{formatNOK(taxDetails.agaCost)}</span>
                          </div>
-                         
+
                          <div className="flex justify-between items-center pt-2">
                            <span className="font-bold text-slate-700">Total kostnad arbeidsgiver</span>
                            <span className="font-bold text-slate-900">{formatNOK(taxDetails.totalEmployerCost)}</span>
@@ -397,7 +397,7 @@ export const App: React.FC = () => {
                       {/* Employee Section */}
                       <div className="space-y-3">
                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Arbeidstaker (Utbetalt)</div>
-                        
+
                         <div className="flex justify-between items-center py-2 border-b border-slate-50 bg-red-50/50 px-3 -mx-3 rounded-lg">
                            <div className="flex flex-col">
                              <span className="text-red-800 font-medium">Din Skatt (Estimert)</span>
@@ -441,4 +441,3 @@ export const App: React.FC = () => {
     </div>
   );
 };
-
