@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { ProcessedBucket } from './types'
+import { ProcessedBucket, Country } from './types'
 import { RAW_DATA } from './data'
 import { Header } from './components/Header'
 import { SalaryInputs } from './components/SalaryInputs'
@@ -12,7 +12,8 @@ import { calculateTaxDetails } from './utils/taxCalculations'
 const STORAGE_KEYS = {
 	yearlyWage: 'no-tax-calc-yearly-wage',
 	deductions: 'no-tax-calc-deductions',
-	pensionRate: 'no-tax-calc-pension-rate'
+	pensionRate: 'no-tax-calc-pension-rate',
+	country: 'no-tax-calc-country'
 }
 
 export const App: React.FC = () => {
@@ -26,6 +27,10 @@ export const App: React.FC = () => {
 	const [deductions, setDeductions] = useState<string>(() => {
 		return localStorage.getItem(STORAGE_KEYS.deductions) || ''
 	})
+	const [country, setCountry] = useState<Country>(() => {
+		return (localStorage.getItem(STORAGE_KEYS.country) as Country) || 'NO'
+	})
+
 	const [monthlyWage, setMonthlyWage] = useState<number>(0)
 	const [percentile, setPercentile] = useState<number | null>(null)
 	const [activeTab, setActiveTab] = useState<'distribution' | 'tax'>('distribution')
@@ -51,6 +56,10 @@ export const App: React.FC = () => {
 		localStorage.setItem(STORAGE_KEYS.pensionRate, String(pensionRate))
 	}, [pensionRate])
 
+	useEffect(() => {
+		localStorage.setItem(STORAGE_KEYS.country, country)
+	}, [country])
+
 	// Process data to get cumulative totals
 	const processedData: ProcessedBucket[] = useMemo(() => {
 		let cumulative = 0
@@ -73,8 +82,8 @@ export const App: React.FC = () => {
 
 	// Tax Calculations
 	const taxDetails = useMemo(
-		() => calculateTaxDetails(yearlyWage, pensionRate, deductions),
-		[yearlyWage, pensionRate, deductions]
+		() => calculateTaxDetails(yearlyWage, pensionRate, deductions, country),
+		[yearlyWage, pensionRate, deductions, country]
 	)
 
 	useEffect(() => {
@@ -118,7 +127,7 @@ export const App: React.FC = () => {
 	return (
 		<div className="min-h-screen bg-slate-50 p-4 font-sans text-slate-800 md:p-8">
 			<div className="mx-auto max-w-4xl">
-				<Header />
+				<Header country={country} setCountry={setCountry} />
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
 					{/* Left Column: Inputs & Summary */}
@@ -144,7 +153,12 @@ export const App: React.FC = () => {
 							{activeTab === 'distribution' ? (
 								<DistributionTab data={processedData} userMonthly={monthlyWage} />
 							) : (
-								<TaxTab yearlyWage={yearlyWage} pensionRate={pensionRate} taxDetails={taxDetails} />
+								<TaxTab
+									yearlyWage={yearlyWage}
+									pensionRate={pensionRate}
+									taxDetails={taxDetails}
+									country={country}
+								/>
 							)}
 						</div>
 					</div>

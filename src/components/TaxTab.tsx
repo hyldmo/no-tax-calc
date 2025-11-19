@@ -1,15 +1,44 @@
 import React from 'react'
 import { Building, PieChart, Info, ArrowRight } from 'lucide-react'
-import { TaxDetails } from '../types'
+import { TaxDetails, Country } from '../types'
 import { formatNOK } from '../utils/format'
 
 interface TaxTabProps {
 	yearlyWage: string
 	pensionRate: number
 	taxDetails: TaxDetails
+	country?: Country
 }
 
-export const TaxTab: React.FC<TaxTabProps> = ({ yearlyWage, pensionRate, taxDetails }) => {
+export const TaxTab: React.FC<TaxTabProps> = ({ yearlyWage, pensionRate, taxDetails, country = 'NO' }) => {
+	const getLabels = (c: Country) => {
+		switch (c) {
+			case 'SE':
+				return {
+					pension: 'Tjänstepension',
+					employerFee: 'Arbetsgivaravgift',
+					tax: 'Din skatt',
+					taxSub: 'Kommunal + Statlig'
+				}
+			case 'DK':
+				return {
+					pension: 'Pension',
+					employerFee: 'Arbejdsgiveravgift',
+					tax: 'Din skat',
+					taxSub: 'AM-bidrag + A-skat'
+				}
+			default:
+				return {
+					pension: 'Pensjon (OTP)',
+					employerFee: 'Arbeidsgiveravgift',
+					tax: 'Din skatt',
+					taxSub: 'Tabelltrekk / Prosent'
+				}
+		}
+	}
+
+	const labels = getLabels(country)
+
 	return (
 		<div className="fade-in slide-in-from-bottom-2 h-full animate-in duration-300">
 			<div className="mb-6 flex items-center justify-between">
@@ -41,14 +70,14 @@ export const TaxTab: React.FC<TaxTabProps> = ({ yearlyWage, pensionRate, taxDeta
 
 						<div className="flex items-center justify-between border-slate-50 border-b py-2">
 							<span className="flex items-center gap-1 text-slate-600">
-								Pensjon (OTP {pensionRate}%)
+								{labels.pension} ({pensionRate}%)
 								<Info className="h-3 w-3 text-slate-300" />
 							</span>
 							<span className="font-medium text-slate-900">+{formatNOK(taxDetails.pensionCost)}</span>
 						</div>
 
 						<div className="flex items-center justify-between border-slate-50 border-b py-2">
-							<span className="text-slate-600">Arbeidsgiveravgift (14.1%)</span>
+							<span className="text-slate-600">{labels.employerFee}</span>
 							<span className="font-medium text-slate-900">+{formatNOK(taxDetails.agaCost)}</span>
 						</div>
 
@@ -76,8 +105,8 @@ export const TaxTab: React.FC<TaxTabProps> = ({ yearlyWage, pensionRate, taxDeta
 
 						<div className="-mx-3 flex items-center justify-between rounded-lg border-slate-50 border-b bg-red-50/50 px-3 py-2">
 							<div className="flex flex-col">
-								<span className="font-medium text-red-800">Din Skatt (Estimert)</span>
-								<span className="text-red-600/70 text-xs">Tabelltrekk / Prosent</span>
+								<span className="font-medium text-red-800">{labels.tax} (Estimert)</span>
+								<span className="text-red-600/70 text-xs">{labels.taxSub}</span>
 							</div>
 							<span className="font-bold text-red-700">-{formatNOK(taxDetails.totalEmployeeTax)}</span>
 						</div>
@@ -106,7 +135,9 @@ export const TaxTab: React.FC<TaxTabProps> = ({ yearlyWage, pensionRate, taxDeta
 								</span>
 							</div>
 							<div className="flex justify-between text-slate-500 text-xs">
-								<span>Arbeidsgiveravgift + Din Skatt</span>
+								<span>
+									{labels.employerFee} + {labels.tax}
+								</span>
 								<span>
 									{((taxDetails.totalStateRevenue / taxDetails.totalEmployerCost) * 100).toFixed(1)}%
 									av totalkostnad

@@ -28,3 +28,5 @@ export interface TaxBrackets {
 	limit: number
 	rate: number
 }
+
+export type Country = 'NO' | 'SE' | 'DK'
