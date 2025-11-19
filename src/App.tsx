@@ -9,13 +9,47 @@ import { DistributionTab } from './components/DistributionTab'
 import { TaxTab } from './components/TaxTab'
 import { calculateTaxDetails } from './utils/taxCalculations'
 
+const STORAGE_KEYS = {
+	yearlyWage: 'no-tax-calc-yearly-wage',
+	deductions: 'no-tax-calc-deductions',
+	pensionRate: 'no-tax-calc-pension-rate'
+}
+
 export const App: React.FC = () => {
-	const [yearlyWage, setYearlyWage] = useState<string>('')
-	const [pensionRate, setPensionRate] = useState<number>(2) // Default 2% OTP
-	const [deductions, setDeductions] = useState<string>('') // User deductions (IPS, interest, etc)
+	const [yearlyWage, setYearlyWage] = useState<string>(() => {
+		return localStorage.getItem(STORAGE_KEYS.yearlyWage) || ''
+	})
+	const [pensionRate, setPensionRate] = useState<number>(() => {
+		const stored = localStorage.getItem(STORAGE_KEYS.pensionRate)
+		return stored ? Number(stored) : 2
+	})
+	const [deductions, setDeductions] = useState<string>(() => {
+		return localStorage.getItem(STORAGE_KEYS.deductions) || ''
+	})
 	const [monthlyWage, setMonthlyWage] = useState<number>(0)
 	const [percentile, setPercentile] = useState<number | null>(null)
 	const [activeTab, setActiveTab] = useState<'distribution' | 'tax'>('distribution')
+
+	// Persist to localStorage
+	useEffect(() => {
+		if (yearlyWage) {
+			localStorage.setItem(STORAGE_KEYS.yearlyWage, yearlyWage)
+		} else {
+			localStorage.removeItem(STORAGE_KEYS.yearlyWage)
+		}
+	}, [yearlyWage])
+
+	useEffect(() => {
+		if (deductions) {
+			localStorage.setItem(STORAGE_KEYS.deductions, deductions)
+		} else {
+			localStorage.removeItem(STORAGE_KEYS.deductions)
+		}
+	}, [deductions])
+
+	useEffect(() => {
+		localStorage.setItem(STORAGE_KEYS.pensionRate, String(pensionRate))
+	}, [pensionRate])
 
 	// Process data to get cumulative totals
 	const processedData: ProcessedBucket[] = useMemo(() => {
